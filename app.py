@@ -2,7 +2,8 @@ from flask import Flask, request
 from flask_cors import CORS
 import tensorflow_hub as hub
 import numpy as np
-
+from sentence_transformers import SentenceTransformer
+import config
 from elastic import connect_elastic, semantic_search, keyword_search
 
 
@@ -15,6 +16,7 @@ CORS(app)
 
 # Load the universal-sentence-encoder
 model = hub.load(app.config['MODEL_URL'])
+# model = SentenceTransformer(config.ST_MODEL_URL)
 # Connect to es node
 connect_elastic(app.config['ELASTIC_IP'], app.config['ELASTIC_PORT'])
 
@@ -25,6 +27,8 @@ def qa():
     if request.args.get("query"):
         # Generate embeddings for the input query
         query_vec = np.asarray(model([request.args.get("query")])[0]).tolist()
+
+        # query_vec = np.asarray(model.encode([request.args.get("query")])[0]).tolist()
         # Retrieve the semantically similar records for the query
         records = semantic_search(query_vec, app.config['SEARCH_THRESH'])
 
